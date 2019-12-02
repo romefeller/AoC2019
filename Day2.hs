@@ -15,14 +15,6 @@ runPgm state (opcode:inp1:inp2:out:mems)
        where
            newMem = state & (element out) .~ (getOp opcode (state !! inp1) (state !! inp2))
 
-search :: Int -> Int -> [Int] -> [Int]
-search x y mem = 
-        let 
-            firstSetup = mem & (element 1) .~ x
-            secondSetup = firstSetup & (element 2) .~ y
-        in 
-            runPgm secondSetup secondSetup
-
 main :: IO ()
 main = do 
     file <- readFile "d2"
