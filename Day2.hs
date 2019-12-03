@@ -19,5 +19,5 @@ main :: IO ()
 main = do 
     file <- readFile "d2"
     nums <- return . read $ "[" ++ file ++ "]" :: IO [Int]
-    answer <- return $ head $ search 41 12 nums 
+    answer <- return $ head $ runPgm nums nums 
     print $ answer
