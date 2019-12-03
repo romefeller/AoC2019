@@ -43,6 +43,15 @@ allInter :: [(Int,Int)] -> [(Int,Int)] -> [(Int,Int)]
 allInter pa (q:x:pb) = findInter pa q x ++ allInter pa (x:pb) 
 allInter _ _ = []
 
+(>-<) :: (Int,Int) -> (Int,Int) -> (Int,Int)
+(>-<) (a,b) (c,d) = (c-a,d-b)
+
+wireSize :: [(Int,Int)] -> (Int,Int) -> Int 
+wireSize (a:b:wires) inters
+    | elem inters (points a b) = (\(x,y) -> abs x + abs y) (inters >-< a)
+    | otherwise = length (points a b) - 1 + wireSize (b:wires) inters
+wireSize _ _ = 0
+
 main :: IO ()
 main = do 
     file1 <- readFile "d3"
@@ -51,4 +60,8 @@ main = do
     allPathsB <- return $ map (readP . T.unpack) $ T.splitOn (T.pack ",") (T.pack $ reverse $ tail $ reverse file2)
     inters <- return $ filter (/= (0,0)) $ allInter (toCoord allPathsA) (toCoord allPathsB)
     print inters
+    sumA <- return $ map (wireSize $ reverse $ toCoord allPathsA) inters
+    sumB <- return $ map (wireSize $ reverse $ toCoord allPathsB) inters
     print $ minimum $ map (\(x,y) -> abs x + abs y) inters
+    -- Part 2
+    print $ minimum $ zipWith (+) sumA sumB
