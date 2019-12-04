@@ -1,6 +1,5 @@
 module Day3 where
 
-import Text.Regex
 import qualified Data.Text as T
 import Data.List
 
