@@ -10,51 +10,26 @@ leadZero opc = if opc < 10000 then '0' : show opc else show opc
 
 type State = [Int]
 
-data Op = Plus | Mult | Mode Int deriving Show
+getOp :: Int -> (Int -> Int -> Int)
+getOp 1 = (+) 
+getOp 2 = (*) 
+getOp x = error $ show x
 
-data IntCode = Modify Op Int Int Int | Readd Int | Output Int | End deriving Show
-
-readPgm :: State -> [IntCode] 
-readPgm [] = []
-readPgm [x] = [End]
-readPgm (opc:next) 
-    | opc == 1 = let (inp1:inp2:out:_) = next in Modify Plus inp1 inp2 out : readPgm (drop 3 next)
-    | opc == 2 = let (inp1:inp2:out:_) = next in Modify Mult inp1 inp2 out : readPgm (drop 3 next) 
-    | opc == 3 = Readd  (head next) : readPgm (tail next)
-    | opc == 4 = Output (head next) : readPgm (tail next)
-    | opc == 99 = End : readPgm []
-    | opc >= 100 = 
-            let (inp1:inp2:out:_) = next 
-            in Modify (Mode opc) inp1 inp2 out : readPgm (drop 3 next) 
-    | otherwise = error $ show $ opc
-
-getOp :: Op -> (Int -> Int -> Int)
-getOp Plus = (+) 
-getOp Mult = (*) 
-
-intOp :: Int -> Op
-intOp 1 = Plus
-intOp 2 = Mult
-intOp _ = error "out of bounds"
-
-runPgm :: [IntCode] -> State -> IO State
-runPgm ((Readd  i):next) state = runPgm next (state & (element i) .~ 1)
-runPgm ((Output x):next) state = print x >> runPgm next state
-runPgm (End:_) state = return state 
-runPgm ((Modify (Mode opcode) inp1 inp2 out):next) state = 
-    runPgm next (state & (element a) .~ (getOp de c b))
+runPgm :: State -> State -> IO State
+runPgm (3:i:next) state = runPgm next (state & (element i) .~ 1)
+runPgm (4:x:next) state = print x >> runPgm next state
+runPgm (99:_) state = return state 
+runPgm (opcode:inp1:inp2:out:next) state = 
+    runPgm next (state & (element $ state !! out) .~ (getOp de c b))
         where
-           de = intOp $ mod opcode 10
+           de = mod opcode 10
            c = if leadZero opcode !! 2 == '1' then inp1 else (state !! inp1)
            b = if leadZero opcode !! 1 == '1' then inp2 else (state !! inp2)
-           a = if leadZero opcode !! 0 == '0' then out else (state !! out)
-runPgm ((Modify opcode inp1 inp2 out):next) state = 
-    runPgm next (state & (element out) .~ (getOp opcode (state !! inp1) (state !! inp2)))
-        
+           --a = if leadZero opcode !! 0 == '0' then out else (state !! out)
 main :: IO ()
 main = do 
     file <- readFile "d5"
     nums <- return . read $ "[" ++ file ++ "]" :: IO [Int]
-    exec <- runPgm (readPgm nums) nums
+    exec <- runPgm nums nums
     print $ exec
     
