@@ -26,9 +26,11 @@ getOp 1 = (+)
 getOp 2 = (*) 
 getOp x = error $ show x
 
+data PgmMode = Normal | Feedback
+
 -- pt1 -> 1, pt2 -> 5
-runPgm :: Int -> State -> IO State  
-runPgm ptr state = 
+runPgm :: PgmMode -> Int -> [Int] -> Int -> State -> IO (Int,Int,State,Int)  
+runPgm pm o r ptr state = 
     let 
         opcode = state !! ptr
         inp1 = state   !! (ptr+1)
@@ -39,23 +41,26 @@ runPgm ptr state =
         a = out --if leadZero opcode !! 4 == 1 then out else (state !! out
     in
         case (mod opcode 100) of
-            3 -> runPgm (ptr+2) (state & (element $ inp1) .~ 5)
-            4 -> print (state !! inp1) >> runPgm (ptr+2) state
-            5 -> if c /= 0 then runPgm b state 
-                           else runPgm (ptr+3) state 
-            6 -> if c == 0 then runPgm b state 
-                           else runPgm (ptr+3) state
-            7 -> if c <  b then runPgm (ptr+4) (state & (element a) .~ 1) 
-                           else runPgm (ptr+4) (state & (element a) .~ 0)
-            8 -> if c == b then runPgm (ptr+4) (state & (element a) .~ 1) 
-                           else runPgm (ptr+4) (state & (element a) .~ 0)
-            99 -> return state
-            de -> runPgm (ptr+4) (state & (element a) .~ (getOp de c b))
+            3 -> runPgm pm o (tail r) (ptr+2) (state & (element $ inp1) .~ (head r))
+            4 -> case pm of  
+                    Normal -> print (state !! inp1) >> 
+                              runPgm pm (state !! inp1) r (ptr+2) state
+                    Feedback -> return ((state !! inp1),ptr+2,state,opcode)
+            5 -> if c /= 0 then runPgm pm o r b state 
+                           else runPgm pm o r (ptr+3) state 
+            6 -> if c == 0 then runPgm pm o r b state 
+                           else runPgm pm o r (ptr+3) state
+            7 -> if c <  b then runPgm pm o r (ptr+4) (state & (element a) .~ 1) 
+                           else runPgm pm o r (ptr+4) (state & (element a) .~ 0)
+            8 -> if c == b then runPgm pm o r (ptr+4) (state & (element a) .~ 1) 
+                           else runPgm pm o r (ptr+4) (state & (element a) .~ 0)
+            99 -> return (o,ptr,state,opcode)
+            de -> runPgm pm o r (ptr+4) (state & (element a) .~ (getOp de c b))
             
 main :: IO ()
 main = do 
     file <- readFile "d5"
     nums <- return . read $ "[" ++ file ++ "]" :: IO [Int]
-    exec <- runPgm 0 nums
+    exec <- runPgm Normal 0 [5] 0 nums
     print $ exec
     
