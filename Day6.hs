@@ -3,20 +3,22 @@ module Day6 where
 
 import Data.List 
 import qualified Data.Text as T
+import qualified Data.Map as M
 
-data RT a = RT a [RT a] deriving Show
+fromPath :: Ord a => [(a, a)] -> M.Map a [a]
+fromPath = M.fromListWith (++) . map (fmap (:[]))
 
-instance Functor RT where
-    fmap f (RT a rt) = RT (f a) (fmap (fmap f) rt)
+allPaths :: Ord a => M.Map a [a] -> a -> [[a]]
+allPaths paths s =
+    case M.lookup s paths of
+        Nothing -> []                
+        Just [] -> [[s]]  
+        Just rs -> (s :) <$> (concat $ (allPaths paths) <$> rs) 
 
-add :: Eq a => [a] -> RT a -> RT a
-add (x:y:_) (RT _ []) = RT y [RT x []]
-add z@(x:y:[]) (RT a rt) 
-    | x == a  = (RT y [(RT x rt)]) 
-    | otherwise = RT a $ (add z) <$> rt
-    
 main :: IO ()
 main = do 
     file <- readFile "testd6"
     p <- return $ fmap (T.splitOn ")" . T.pack) $ words file 
-    print p
+    paths <- return $ fromPath $ map (\(x:y:[]) -> (T.unpack x,T.unpack y)) p
+    print paths
+    print $ allPaths paths "K"
