@@ -3,22 +3,21 @@ module Day6 where
 
 import Data.List 
 import qualified Data.Text as T
-import qualified Data.Map as M
 
-fromPath :: Ord a => [(a, a)] -> M.Map a [a]
-fromPath = M.fromListWith (++) . map (fmap (:[]))
-
-allPaths :: Ord a => M.Map a [a] -> a -> [[a]]
-allPaths paths s =
-    case M.lookup s paths of
-        Nothing -> []                
-        Just [] -> [[s]]  
-        Just rs -> (s :) <$> (concat $ (allPaths paths) <$> rs) 
+allPaths :: Eq a => a -> [(a,a)] -> [[a]]
+allPaths s paths = next
+    where
+      curr = filter ((s ==) . fst) paths
+      ns = snd <$> curr
+      next = case curr of
+                  [] -> [[s]]
+                  _ -> map (s:) $ concatMap (\x -> allPaths x paths) ns
 
 main :: IO ()
 main = do 
-    file <- readFile "testd6"
+    file <- readFile "d6"
     p <- return $ fmap (T.splitOn ")" . T.pack) $ words file 
-    paths <- return $ fromPath $ map (\(x:y:[]) -> (T.unpack x,T.unpack y)) p
-    print paths
-    print $ allPaths paths "K"
+    paths <- return $ map (\(x:y:[]) -> (x,y)) p
+    orbits <- return $ nub $ (map head p) ++ (map (!! 1) p)
+    let numOrbits path x = length $ takeWhile (/= x) $ head $ filter (elem x) path
+    print $ sum $ map (numOrbits (allPaths "COM" paths)) orbits
