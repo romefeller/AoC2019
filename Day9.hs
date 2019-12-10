@@ -31,6 +31,7 @@ data PgmMode = Normal | Feedback
 paramMode :: Integer -> Integer -> Integer -> Integer -> [Integer] -> Integer
 paramMode rb opcode digit inp state 
     | digit == 4 && res == 0 = inp
+    | res == 2 && (mod opcode 100) == 3  = rb + inp 
     | res == 2 = state !! fromIntegral (rb + inp)
     | res == 1 = inp 
     | res == 0 = state !! fromIntegral inp

@@ -47,6 +47,15 @@ countAst grid z = length . filter (== True) . map (isVisible grid z) . filter (/
 maxCountAll :: [String] -> Int
 maxCountAll grid = maximum $ map (countAst grid) $ allAsteroids grid
 
+laser :: Coord -> Coord -> Double
+laser p1 p2 = 
+    let
+        (dx,dy) = p2 >-< p1
+        theta = atan2 (fromIntegral dx) (fromIntegral $ -dy)
+    in
+        theta + (if theta < 0 then 2*pi else 0)
+     
+
 main :: IO ()
 main = do 
     file <- readFile "d10"
