@@ -30,11 +30,10 @@ data PgmMode = Normal | Feedback
 
 paramMode :: Integer -> Integer -> Integer -> Integer -> [Integer] -> Integer
 paramMode rb opcode digit inp state 
-    | digit == 4 && res == 0 = inp
-    | res == 2 && (mod opcode 100) == 3  = rb + inp 
-    | res == 2 = state !! fromIntegral (rb + inp)
+    | digit == 4 && elem res [0,2] = (if res == 2 then rb else 0) + inp
+    | res == 2 && elem (mod opcode 100) [3]  = rb + inp 
+    | elem res [0,2] = state !! fromIntegral ((if res == 2 then rb else 0) + inp)
     | res == 1 = inp 
-    | res == 0 = state !! fromIntegral inp
     where 
         res = leadZero opcode !! (fromIntegral digit)
         
