@@ -1,4 +1,4 @@
-module Day11 where
+module Main where
 
 import Control.Lens
 import qualified Day9 as D9
