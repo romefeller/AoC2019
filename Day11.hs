@@ -2,6 +2,7 @@ module Main where
 
 import Control.Lens
 import qualified Day9 as D9
+import Data.Sequence
 
 data Dir = U | D | L | R deriving Show
 
@@ -29,8 +30,8 @@ paint :: Integer
       -> D9.State
       -> IO (Integer,ProgramResult)
 paint r rb ptr state = do
-     (rb',move,p,s,_) <- D9.runPgm rb D9.Feedback 0 [r] ptr state
-     res <- D9.runPgm rb' D9.Feedback 0 [move] p state
+     (rb',move,p,s,_) <- D9.runPgm rb D9.Feedback 0 (singleton r) ptr state
+     res <- D9.runPgm rb' D9.Feedback 0 (singleton move) p state
      return (move,res)
 
 iterPaint _ _ _ _ wh bl _ _ 99 = return (wh,bl)
@@ -49,5 +50,5 @@ main :: IO ()
 main = do 
     file <- readFile "d11"
     nums <- return . read $ "[" ++ file ++ "]" :: IO [Integer]
-    exec <- iterPaint 0 0 0 nums [] [] (0,0) (0,1) (-1)
+    exec <- iterPaint 0 0 0 (fromList nums) [] [] (0,0) (0,1) (-1)
     print $ exec
