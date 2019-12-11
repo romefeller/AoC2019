@@ -18,8 +18,8 @@ ri = (1,0)
 (>+<) :: Coord -> Coord -> Coord
 (>+<) (a,b) (c,d) = (a+c,b+d)
 
-changeDir :: Int -> (Double,Double) -> (Int,Int)
-changeDir t (x,y) = (round $ x*cos theta - y*sin theta,round $ x*sin theta + y*cos theta) 
+changeDir :: Int -> (Double,Double) -> (Double,Double)
+changeDir t (x,y) = (x*cos theta - y*sin theta,x*sin theta + y*cos theta) 
     where
         theta = 0.5*pi* fromIntegral (-2*t+1)        
 
@@ -32,10 +32,22 @@ paint r rb ptr state = do
      (rb',move,p,s,_) <- D9.runPgm rb D9.Feedback 0 [r] ptr state
      res <- D9.runPgm rb' D9.Feedback 0 [move] p state
      return (move,res)
+
+iterPaint _ _ _ _ wh bl _ _ 99 = return (wh,bl)
+iterPaint r rb ptr state wh bl initPoint initDir _ = do
+    (move,(rb',color,p,s,opc)) <- paint r rb ptr state
+    let
+        (x,y) = changeDir (fromIntegral move) initDir
+        newP = initPoint >+< (round x, round y)
+    if color == 0 then
+       iterPaint color rb ptr state wh (newP:bl) newP (x,y) opc
+    else
+       iterPaint color rb ptr state (newP:wh) bl newP (x,y) opc
+    
     
 main :: IO ()
 main = do 
     file <- readFile "d11"
     nums <- return . read $ "[" ++ file ++ "]" :: IO [Integer]
-    exec <- D9.runPgm 0 D9.Feedback 0 [0] 0 (nums ++ repeat 0)
+    exec <- iterPaint 0 0 0 nums [] [] (0,0) (0,1) (-1)
     print $ exec
