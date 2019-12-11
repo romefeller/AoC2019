@@ -1,6 +1,6 @@
 module Day9 where
 
-import Text.Regex
+--import Text.Regex
 import qualified Data.Text as T
 import Data.List
 
