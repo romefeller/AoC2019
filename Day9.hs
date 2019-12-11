@@ -37,7 +37,7 @@ paramMode rb opcode digit inp state
     where 
         res = leadZero opcode !! (fromIntegral digit)
         
-runPgm :: Integer -> PgmMode -> Integer -> [Integer] -> Int -> State -> IO (Integer,Int,State,Integer)  
+runPgm :: Integer -> PgmMode -> Integer -> [Integer] -> Int -> State -> IO (Integer,Integer,Int,State,Integer)  
 runPgm rb pm o r ptr state = 
     let 
         opcode = state !! ptr
@@ -53,7 +53,7 @@ runPgm rb pm o r ptr state =
             4 -> case pm of  
                     Normal -> print c >> 
                               runPgm rb pm c r (ptr+2) state
-                    Feedback -> return (c,ptr+2,state,opcode)
+                    Feedback -> return (rb,c,ptr+2,state,opcode)
             5 -> if c /= 0 then runPgm rb pm o r (fromIntegral b) state 
                            else runPgm rb pm o r (ptr+3) state 
             6 -> if c == 0 then runPgm rb pm o r (fromIntegral b) state 
@@ -67,13 +67,13 @@ runPgm rb pm o r ptr state =
                 else 
                     runPgm rb pm o r (ptr+4) (state & (element $ fromIntegral a) .~ 0)
             9 -> runPgm (rb + c) pm o r (ptr+2) state
-            99 -> return (o,ptr,take 1000 state,opcode)
+            99 -> return (rb,o,ptr,take 1000 state,opcode)
             de -> runPgm rb pm o r (ptr+4) (state & (element $ fromIntegral a) .~ (getOp de c b))
             
 main :: IO ()
 main = do 
     file <- readFile "d9"
     nums <- return . read $ "[" ++ file ++ "]" :: IO [Integer]
-    exec <- runPgm 0 Normal 0 [1] 0 (nums ++ repeat 0)
+    exec <- runPgm 0 Normal 0 [2] 0 (nums ++ repeat 0)
     print $ exec
     
