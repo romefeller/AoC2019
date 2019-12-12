@@ -2,6 +2,7 @@ module Main where
 
 import Control.Lens
 import qualified Day9 as D9
+import Prelude hiding (replicate)
 import Data.Sequence
 
 data Dir = U | D | L | R deriving Show
@@ -30,25 +31,30 @@ paint :: Integer
       -> D9.State
       -> IO (Integer,ProgramResult)
 paint r rb ptr state = do
-     (rb',move,p,s,_) <- D9.runPgm rb D9.Feedback 0 (singleton r) ptr state
-     res <- D9.runPgm rb' D9.Feedback 0 (singleton move) p state
-     return (move,res)
+     (rb',color,p,s,_) <- 
+        D9.runPgm rb D9.Feedback 0 (singleton r) ptr state
+     res <- D9.runPgm rb' D9.Feedback 0 (singleton r) p s
+     return (color,res)
 
-iterPaint _ _ _ _ wh bl _ _ 99 = return (wh,bl)
 iterPaint r rb ptr state wh bl initPoint initDir _ = do
-    (move,(rb',color,p,s,opc)) <- paint r rb ptr state
+    (color,(rb',move,p,s,opc)) <- paint r rb ptr state
     let
         (x,y) = changeDir (fromIntegral move) initDir
         newP = initPoint >+< (round x, round y)
-    if color == 0 then
-       iterPaint color rb ptr state wh (newP:bl) newP (x,y) opc
-    else
-       iterPaint color rb ptr state (newP:wh) bl newP (x,y) opc
+        newC z = if elem z wh then 1 else 0 
+    print (r,move,color,ptr,opc)
+    if opc == 99 then
+        return (wh,bl)
+    else 
+        if color == 0 then
+            iterPaint (newC newP) rb' p s wh (initPoint:bl) newP (x,y) opc
+        else
+            iterPaint (newC newP) rb' p s (initPoint:wh) bl newP (x,y) opc
     
     
 main :: IO ()
 main = do 
     file <- readFile "d11"
     nums <- return . read $ "[" ++ file ++ "]" :: IO [Integer]
-    exec <- iterPaint 0 0 0 (fromList nums) [] [] (0,0) (0,1) (-1)
+    exec <- iterPaint 0 0 0 ((fromList  nums) >< replicate 1000 0) [] [] (0,0) (0,1) (-1)
     print $ exec
